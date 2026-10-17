@@ -380,6 +380,7 @@
             if(f && f.kcal !== null && f.kcal !== undefined){
               out.push({target: cp.name, name: nm, k: -f.kcal,
                         na: (f.sodium === null || f.sodium === undefined) ? null : -f.sodium,
+                        unit: f.unit || "",
                         conf: f.confidence || "low"});
             }
           });
@@ -445,6 +446,7 @@
       ? '<div class="notes"><h4>可特调（估算值，跨市场参考，未计入上方数值）</h4>'
         + notes.slice(0,3).map(function(n){
             return '<div class="note">' + n.target + ' 去' + n.name
+              + (n.unit ? '（1 ' + n.unit + '）' : '')
               + '　<b>' + fmt(n.k) + ' kcal</b>'
               + (n.na === null ? '' : '　' + fmt(n.na) + ' mg 钠')
               + '　<span>' + n.conf + '</span></div>';

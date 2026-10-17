@@ -402,6 +402,7 @@ def modification_notes(combo, factors, limit=3):
                 notes.append({"target": comp["name"], "name": name,
                               "d_kcal": -f["kcal"],
                               "d_sodium": (-f["sodium"] if f.get("sodium") is not None else None),
+                              "unit": f.get("unit", ""),
                               "tag": "估算", "confidence": f.get("confidence", "low")})
     return notes[:limit]
 
@@ -533,7 +534,8 @@ def render(combo, sugg, notes, mode, cap, protein_floor, state="ok"):
         L.append("")
         L.append("可特调（估算值，跨市场参考，未与上方数值相加）：")
         for n in notes:
-            seg = f"  · {n['target']} 去{n['name']}  {n['d_kcal']:+.0f} kcal"
+            unit = f"（1 {n['unit']}）" if n.get("unit") else ""
+            seg = f"  · {n['target']} 去{n['name']}{unit}  {n['d_kcal']:+.0f} kcal"
             if n.get("d_sodium") is not None:
                 seg += f"  {n['d_sodium']:+.0f} mg 钠"
             seg += f"  [{n['tag']}·{n['confidence']}]"
