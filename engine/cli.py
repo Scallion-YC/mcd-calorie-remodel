@@ -91,6 +91,28 @@ def cmd_plan(args):
     return 0
 
 
+def cmd_estimate(args):
+    book, menu, details, zero, _ = load_all()
+    table = core.load_estimates()
+    names = [args.name] if args.name else list(table.keys())
+    if not table:
+        print("estimates.json 为空。")
+        return 0
+    for n in names:
+        r = core.estimate(n, book, table)
+        if not r:
+            print(f"{n}：没有匹配的锚点商品，无法估算。")
+            continue
+        print(f"【估算】{r['name']}")
+        print("营养表无此条，按同类商品推算，仅供点单参考，不进入推荐排序。")
+        print(f"热量 {r['kcal_lo']}–{r['kcal_hi']} kcal（中值 {r['kcal_mid']}）"
+              f"· 蛋白 {r['protein_lo']}–{r['protein_hi']} g")
+        print(f"依据：参照 {r['anchor']}，{r['why']}")
+        print(f"误差带：±{r['band']*100:.0f}%")
+        print()
+    return 0
+
+
 def cmd_selftest(args):
     book, menu, details, zero, _ = load_all()
     pool = core.candidates(menu, details, book, zero)
@@ -154,6 +176,20 @@ def cmd_selftest(args):
     check("白名单内保留 0 卡，名单外视为 unknown", m1 is not None and m2 is None,
           f"{m1} / {m2}")
 
+    print("\n验收 7：估算区间合理且锚点存在")
+    est = core.load_estimates()
+    if est:
+        bad = []
+        for nm in est:
+            r = core.estimate(nm, book, est)
+            if not r or not (r["kcal_lo"] < r["kcal_mid"] < r["kcal_hi"]):
+                bad.append(nm)
+        check(f"{len(est)} 个估算项区间有序", not bad, str(bad))
+        check("估算不进入推荐池",
+              not any("龙焰" in c.name for c in pool))
+    else:
+        check("estimates.json 非空", False)
+
     print(f"\n{ok} 通过 / {fail} 失败")
     return 0 if fail == 0 else 1
 
@@ -166,6 +202,9 @@ def main():
     sub.add_parser("list", help="列出可完整计算的套餐")
     sub.add_parser("selftest", help="离线自测")
 
+    e = sub.add_parser("estimate", help="当季新品的区间估算")
+    e.add_argument("--name", default="", help="商品名，省略则列出全部")
+
     p = sub.add_parser("plan", help="出方案")
     p.add_argument("--mode", default="cut", choices=list(core.MODES))
     p.add_argument("--kcal", type=float, default=600)
@@ -176,7 +215,7 @@ def main():
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    return {"coverage": cmd_coverage, "list": cmd_list,
+    return {"coverage": cmd_coverage, "list": cmd_list, "estimate": cmd_estimate,
             "plan": cmd_plan, "selftest": cmd_selftest}[args.cmd](args)
 
 

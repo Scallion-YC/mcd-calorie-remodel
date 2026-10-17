@@ -73,6 +73,38 @@ def load_derived():
     return {norm(k): v for k, v in (d.get("rules") or {}).items()}
 
 
+def load_estimates():
+    d = _read("estimates.json", {})
+    return d.get("items") or {}
+
+
+def estimate(name, book, table):
+    """当季新品的区间估算。返回 None 表示没有可用锚点。"""
+    rule = table.get(name)
+    if not rule:
+        return None
+    row = book.get(rule.get("anchor", ""))
+    if not row:
+        return None
+    k = num(row.get("kcal")) or 0.0
+    p = num(row.get("protein")) or 0.0
+    try:
+        f = float(rule.get("factor", 1))
+        pf = float(rule.get("protein_factor", 1))
+        band = float(rule.get("band", 0.15))
+    except (TypeError, ValueError):
+        return None
+    mid = k * f
+    pmid = p * pf
+    return {
+        "name": name, "anchor": rule.get("anchor", ""), "why": rule.get("why", ""),
+        "band": band,
+        "kcal_mid": round(mid), "kcal_lo": round(mid * (1 - band)), "kcal_hi": round(mid * (1 + band)),
+        "protein_mid": round(pmid, 1), "protein_lo": round(pmid * (1 - band), 1),
+        "protein_hi": round(pmid * (1 + band), 1),
+    }
+
+
 # ---------------------------------------------------------------- 对齐
 
 def norm(s):
