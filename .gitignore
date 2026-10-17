@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+
+# WorkBuddy 项目记忆：本地内部文件，不公开
+.workbuddy/
+
+# 探针原始返回：含账号派生的门店与订单字段，不进仓库
+probe/out/
+
+# 竞品 README 原文：第三方内容，仅本地研究用
+research/readmes/
+research/meta.json
+research/extra.json
+research/resolved.json
+research/_*.json
+
+# 临时文件
+*.tmp
+.DS_Store
+Thumbs.db

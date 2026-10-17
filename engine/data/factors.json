@@ -1,0 +1,9 @@
+{
+  "_comment": "特调因子表。官方营养表不含酱料/配料维度，数值需自建。kcal 为 null 表示未知，未知项一律不参与计算。",
+  "_updated": "2026-10-17",
+  "麦香鸡酱": {"kcal": null, "protein": null, "sodium": null, "unit": "份", "source": "", "confidence": "low"},
+  "沙拉酱":   {"kcal": null, "protein": null, "sodium": null, "unit": "份", "source": "", "confidence": "low"},
+  "芝士片":   {"kcal": null, "protein": null, "sodium": null, "unit": "片", "source": "", "confidence": "low"},
+  "生菜":     {"kcal": null, "protein": null, "sodium": null, "unit": "份", "source": "", "confidence": "low"},
+  "糖浆":     {"kcal": null, "protein": null, "sodium": null, "unit": "份", "source": "", "confidence": "low"}
+}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麦当劳热量改造器 · 改三处，少 220 卡</title>
+<style>
+  :root{
+    --paper:#F6F3EE; --card:#FFFDF9; --ink:#1E1C19; --muted:#6E675E;
+    --line:#E6DFD4; --red:#DA291C; --gold:#FFC72C;
+    --green:#2E6B4F; --amber:#A96A12; --shadow:0 1px 2px rgba(30,28,25,.04),0 8px 24px rgba(30,28,25,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--paper); color:var(--ink);
+    font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.6;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:48px 24px 80px}
+  header{margin-bottom:36px}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.08em;
+       color:var(--muted);text-transform:uppercase;margin-bottom:18px}
+  .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red)}
+  h1{font-size:clamp(28px,4.4vw,46px);line-height:1.25;letter-spacing:-.02em;margin:0 0 14px;font-weight:800;text-wrap:balance}
+  h1 em{font-style:normal;color:var(--red)}
+  .sub{margin:0;color:var(--muted);font-size:16px;max-width:680px;text-wrap:balance}
+  .layout{display:grid;grid-template-columns:330px 1fr;gap:28px;align-items:start;margin-top:34px}
+  @media(max-width:860px){.layout{grid-template-columns:1fr}.wrap{padding:32px 16px 64px}}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);position:sticky;top:24px}
+  @media(max-width:860px){.panel{position:static}}
+  .field{margin-bottom:22px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px}
+  .field label b{color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;margin:0 2px}
+  .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:#EFEAE1;padding:4px;border-radius:12px}
+  .seg button{appearance:none;border:0;background:transparent;padding:9px 4px;border-radius:9px;
+              font-size:14px;color:var(--muted);cursor:pointer;font-family:inherit;transition:.16s}
+  .seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(30,28,25,.12)}
+  input[type=range]{width:100%;accent-color:var(--red);margin:2px 0 0}
+  input[type=number]{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;
+                     background:#fff;font-size:15px;font-family:inherit;color:var(--ink);font-variant-numeric:tabular-nums}
+  input[type=number]:focus{outline:2px solid rgba(218,41,28,.25);border-color:var(--red)}
+  .hint{font-size:12.5px;color:var(--muted);line-height:1.7;border-top:1px dashed var(--line);padding-top:14px}
+  .hint b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 26px 22px;box-shadow:var(--shadow)}
+  .banner{display:flex;gap:10px;align-items:flex-start;background:#FDF6E3;border:1px solid #F0E0B8;
+          color:#6B4E12;border-radius:12px;padding:11px 13px;font-size:13.5px;line-height:1.65;margin-bottom:18px}
+  .banner::before{content:"!";flex:0 0 18px;height:18px;border-radius:50%;background:var(--gold);color:#3A2C00;
+                  font-weight:800;font-size:12px;display:grid;place-items:center;margin-top:3px}
+  .row1{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .title{font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .badge{font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+  .badge.ok{background:#EAF3EC;border-color:#CFE3D6;color:var(--green)}
+  .badge.partial{background:#FBF0DC;border-color:#EED9B4;color:var(--amber)}
+  .comps{color:var(--muted);font-size:14px;margin-bottom:20px}
+  .reason{font-size:12.5px;color:#8A8278;margin:-14px 0 18px}
+
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 0 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  @media(max-width:560px){.metrics{grid-template-columns:repeat(2,1fr)}}
+  .m .k{font-size:12px;color:var(--muted);margin-bottom:4px}
+  .m .v{font-size:26px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+  .m .u{font-size:12px;color:var(--muted);margin-left:3px;font-weight:400}
+  .m.kcal .v{color:var(--red)}
+  .sodium{margin-top:14px;font-size:13px;color:var(--muted);display:flex;align-items:center;gap:10px}
+  .bar{flex:1;height:5px;border-radius:3px;background:#EDE7DC;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--gold)}
+
+  .change{margin-top:22px}
+  .change h3{font-size:13px;color:var(--muted);font-weight:500;margin:0 0 10px;letter-spacing:.02em}
+  .item{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;
+        padding:11px 10px;border-radius:12px;cursor:pointer;transition:.14s;border:1px solid transparent}
+  .item:hover{background:#F8F4EC}
+  .item.on{background:#FBF3F2;border-color:#F1D8D4}
+  .box{width:18px;height:18px;border:1.5px solid #C9C0B3;border-radius:5px;display:grid;place-items:center;
+       font-size:11px;color:#fff;transition:.14s}
+  .item.on .box{background:var(--red);border-color:var(--red)}
+  .item .what{font-size:14.5px;min-width:0;overflow-wrap:anywhere}
+  .item .what b{font-weight:600}
+  .item .what span{color:var(--muted);font-size:12.5px;margin-left:6px}
+  .delta{font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--muted)}
+  @media(max-width:560px){
+    .item{grid-template-columns:20px minmax(0,1fr);row-gap:4px}
+    .delta{grid-column:2;white-space:normal}
+  }
+  .delta b{font-weight:600}
+  .delta .down{color:var(--green)}
+  .delta .up{color:var(--amber)}
+
+  .after{margin-top:16px;padding:14px 16px;background:#F4F0E8;border-radius:12px;
+         display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:14px}
+  .after b{font-variant-numeric:tabular-nums;font-size:16px}
+  .gap{margin-top:12px;font-size:13px;color:var(--amber);line-height:1.7}
+  .gap.ok{color:var(--green)}
+
+  .alts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  @media(max-width:700px){.alts{grid-template-columns:1fr}}
+  .alt{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer;
+       text-align:left;font-family:inherit;color:inherit;transition:.14s}
+  .alt:hover{border-color:#C9C0B3;transform:translateY(-1px)}
+  .alt[aria-pressed="true"]{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+  .alt .n{font-size:13px;font-weight:600;margin-bottom:6px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .alt .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  footer{margin-top:44px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;line-height:1.9}
+  footer b{color:var(--ink);font-weight:600}
+  .stats{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:10px}
+  .stats div span{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="tag">非麦当劳官方产品 · 数据来自官方 MCP 快照</div>
+    <h1>同一份套餐，改三处，<em>少 220 卡</em>。</h1>
+    <p class="sub">不替你挑最便宜的，也不只挑热量最低的。它把这顿拆成组件，告诉你改哪一处最划算。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="panel">
+      <div class="field">
+        <label>目标</label>
+        <div class="seg" id="mode">
+          <button data-mode="cut" aria-pressed="true">减脂</button>
+          <button data-mode="bulk" aria-pressed="false">增肌</button>
+          <button data-mode="keep" aria-pressed="false">维持</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>本餐热量额度 <b id="kcalOut">900</b> kcal</label>
+        <input type="range" id="kcal" min="400" max="1400" step="25" value="900">
+      </div>
+      <div class="field">
+        <label>体重（只用来推蛋白下限）</label>
+        <input type="number" id="weight" value="70" min="35" max="150" step="1">
+      </div>
+      <div class="hint" id="hint"></div>
+    </aside>
+
+    <section>
+      <article class="card" id="card"></article>
+      <div class="alts" id="alts"></div>
+    </section>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script id="payload" type="application/json">/*__DATA__*/null</script>
+<script>
+(function(){
+  "use strict";
+  var P = JSON.parse(document.getElementById("payload").textContent);
+  var MODES = {
+    cut:  {label:"减脂", key:"density", g:1.6},
+    bulk: {label:"增肌", key:"ppd", g:1.8},
+    keep: {label:"维持", key:"band", g:0}
+  };
+
+  function norm(s){
+    return String(s == null ? "" : s).normalize("NFKC")
+      .replace(/[™®]/g,"").replace(/[\s\u3000]/g,"");
+  }
+  function num(v){
+    if(v === null || v === undefined) return null;
+    var s = String(v).trim();
+    if(s === "" || s === "null" || s === "-") return null;
+    var x = Number(s);
+    return isNaN(x) ? null : x;
+  }
+
+  var ZERO = {};
+  (P.zero || []).forEach(function(n){ ZERO[norm(n)] = 1; });
+
+  var BOOK = {};
+  var dups = 0;
+  (P.nutrition.rows || []).forEach(function(r){
+    var k = norm(r.n);
+    if(BOOK[k]) { dups++; return; }
+    BOOK[k] = r;
+  });
+
+  var ALIAS = P.aliases || {};
+  var aliasHits = 0;
+
+  function macro(name){
+    var key = norm(name);
+    var r = BOOK[key];
+    if(!r && ALIAS[key]){ r = BOOK[ALIAS[key]]; if(r) aliasHits++; }
+    if(!r) return null;
+    var k = num(r.k), p = num(r.p), na = num(r.na);
+    if(k === null && p === null && na === null) return null;
+    if(k === 0 && !ZERO[key]) return null;
+    return [k || 0, p || 0, na || 0];
+  }
+
+  function parseDiff(s){
+    if(!s) return 0;
+    var m = String(s).replace(/[¥￥\s]/g,"").match(/([+-]?\d+(?:\.\d+)?)/);
+    return m ? parseFloat(m[1]) : 0;
+  }
+
+  function components(detail){
+    var out = [];
+    (detail.r || []).forEach(function(rd){
+      var ch = rd.c || [];
+      var pick = ch.filter(function(c){ return c.d === 1; });
+      if(!pick.length) pick = ch.filter(function(c){ return c.q > 0; });
+      if(!pick.length && ch.length) pick = [ch[0]];
+      pick.forEach(function(c){
+        out.push({round: rd.n, code: c.c, name: c.n, qty: c.q || 1});
+      });
+    });
+    return out;
+  }
+
+  var MAIN_KW = ["堡","卷","鸡","鱼","牛","猪","饭","沙拉","肉"];
+
+  function buildCombo(code, item, detail){
+    var comps = components(detail);
+    var c = {code:code, name:item.n, price:num(item.p), comps:comps,
+             kcal:0, protein:0, sodium:0, missing:[], total:comps.length, hit:0, hasMain:false};
+    comps.forEach(function(cp){
+      var m = macro(cp.name);
+      if(m){
+        c.kcal += m[0] * cp.qty;
+        c.protein += m[1] * cp.qty;
+        c.sodium += m[2] * cp.qty;
+        c.hit++;
+      } else {
+        c.missing.push(cp.name);
+      }
+      MAIN_KW.forEach(function(k){ if(cp.name.indexOf(k) >= 0) c.hasMain = true; });
+    });
+    c.density = c.kcal ? +(c.protein / c.kcal * 100).toFixed(2) : 0;
+    c.ppd = c.price ? +(c.protein / c.price).toFixed(2) : 0;
+    c.status = c.total === 0 ? "unknown" : (c.missing.length ? "partial" : "exact");
+    return c;
+  }
+
+  var pool = [];
+  Object.keys(P.details || {}).forEach(function(code){
+    var item = (P.menu.items || {})[code];
+    if(!item) return;
+    var c = buildCombo(code, item, P.details[code]);
+    if(c.status === "exact" && c.hasMain) pool.push(c);
+  });
+
+  function floorFor(mode, weight){
+    var g = MODES[mode].g;
+    if(!g || !weight) return 0;
+    return Math.round(g * weight / 3 * 10) / 10;
+  }
+
+  function solve(mode, cap, floor){
+    var limit = mode === "keep" ? cap * 1.1 : cap;
+    var within = pool.filter(function(c){ return c.kcal <= limit; });
+    var passed = within.filter(function(c){ return !floor || c.protein >= floor; });
+    var key = MODES[mode].key;
+
+    function sortKey(list){
+      if(key === "density") list.sort(function(a,b){ return b.density - a.density; });
+      else if(key === "ppd") list.sort(function(a,b){ return b.ppd - a.ppd; });
+      else if(key === "band") list.sort(function(a,b){
+        return Math.abs(a.kcal - cap) - Math.abs(b.kcal - cap) || a.price - b.price;
+      });
+      else list.sort(function(a,b){ return a.price - b.price; });
+      return list;
+    }
+    if(passed.length) return {plans: sortKey(passed).slice(0,3), state:"ok"};
+    if(within.length){
+      within.sort(function(a,b){ return b.protein - a.protein || a.kcal - b.kcal; });
+      return {plans: within.slice(0,3), state:"protein_short"};
+    }
+    pool.slice().sort(function(a,b){ return a.kcal - b.kcal; });
+    return {plans: pool.slice(0,3), state:"kcal_over"};
+  }
+
+  function tasteCost(name){
+    var w = P.taste && P.taste.weights ? P.taste.weights : {};
+    var hit = null;
+    Object.keys(w).forEach(function(k){
+      if(name.indexOf(k) >= 0 && (hit === null || w[k] > hit)) hit = w[k];
+    });
+    return hit === null ? (P.taste && P.taste.default || 3) : hit;
+  }
+
+  function suggestions(combo, mode, cap, limit){
+    limit = limit || 3;
+    var out = [];
+    (P.details[combo.code].r || []).forEach(function(rd){
+      var ch = rd.c || [];
+      var deft = null;
+      ch.forEach(function(c){ if(c.d === 1 && !deft) deft = c; });
+      if(!deft) return;
+      var dm = macro(deft.n);
+      if(!dm) return;
+      ch.forEach(function(alt){
+        if(alt === deft) return;
+        var am = macro(alt.n);
+        if(!am) return;
+        var dk = am[0] - dm[0], dp = am[1] - dm[1], ds = am[2] - dm[2];
+        var dprice = parseDiff(alt.dp) - parseDiff(deft.dp);
+        var newK = combo.kcal + dk;
+        var benefit;
+        if(mode === "cut"){
+          if(dk >= 0 || newK > cap || dprice > 0) return;
+          benefit = -dk / 100;
+        } else if(mode === "bulk"){
+          if(dp < 2 || newK > cap) return;
+          benefit = dp / (1 + Math.max(dprice, 0) / 5);
+        } else {
+          if(dk >= 0) return;
+          benefit = -dk / 200;
+        }
+        out.push({round:rd.n, from:deft.n, to:alt.n, dk:dk, dp:dp, ds:ds,
+                  dprice:dprice, score: benefit / tasteCost(alt.n)});
+      });
+    });
+    out.sort(function(a,b){ return b.score - a.score; });
+
+    var seen = {}, picked = [], cumK = 0, cumP = 0;
+    for(var i=0;i<out.length;i++){
+      var s = out[i];
+      if(seen[s.round]) continue;
+      if(mode === "cut"){
+        var newK2 = combo.kcal + cumK + s.dk;
+        var drop = -(cumK + s.dk);
+        if(drop > 0.3 * combo.kcal || newK2 < 400) continue;
+        var newP2 = combo.protein + cumP + s.dp;
+        if(newP2 / newK2 < combo.protein / combo.kcal) continue;
+      }
+      seen[s.round] = 1;
+      picked.push(s);
+      cumK += s.dk; cumP += s.dp;
+      if(picked.length >= limit) break;
+    }
+    return picked;
+  }
+
+  // ---------------------------------------------------------------- UI
+  var state = {mode:"cut", cap:900, weight:70, idx:0, on:{}};
+
+  function fmt(n, d){ return (Math.round(n * 10) / 10).toFixed(d === undefined ? 0 : d); }
+
+  function reasonOf(mode, stateName){
+    if(stateName === "protein_short") return "这个额度内热量达标、蛋白最高的一个";
+    if(stateName === "kcal_over") return "所有套餐里热量最低的一个";
+    return {cut: "同额度内蛋白密度最高", bulk: "同额度内蛋白性价比最高", keep: "最接近你给的额度"}[mode] || "";
+  }
+
+  function renderCard(combo, sugg, floor, stateName){
+    var selected = sugg.filter(function(s, i){ return state.on[i]; });
+    var k = combo.kcal, p = combo.protein, pr = combo.price || 0;
+    selected.forEach(function(s){ k += s.dk; p += s.dp; pr += s.dprice; });
+
+    var badge = combo.status === "exact"
+      ? '<span class="badge ok">数据 exact ' + combo.hit + '/' + combo.total + ' 组件</span>'
+      : '<span class="badge partial">覆盖率 ' + combo.hit + '/' + combo.total + '</span>';
+
+    var banner = "";
+    if(stateName === "protein_short"){
+      banner = '<div class="banner">这个额度内没有套餐能达到蛋白 ' + fmt(floor,1) + ' g（当前最高 '
+        + fmt(combo.protein) + ' g）。以下是最接近的方案，缺口照实列出。</div>';
+    } else if(stateName === "kcal_over"){
+      banner = '<div class="banner">没有套餐低于 ' + fmt(state.cap) + ' kcal，以下为热量最低的方案。</div>';
+    }
+
+    var sodiumPct = Math.min(100, Math.round(combo.sodium / 2000 * 100));
+
+    var items = sugg.map(function(s, i){
+      var on = state.on[i] ? " on" : "";
+      var dk = s.dk < 0 ? '<span class="down">' + fmt(s.dk) + ' kcal</span>'
+                        : '<span class="up">+' + fmt(s.dk) + ' kcal</span>';
+      return '<div class="item' + on + '" data-i="' + i + '" role="checkbox" tabindex="0" aria-checked="' + (state.on[i] ? "true" : "false") + '">'
+        + '<div class="box">' + (state.on[i] ? "✓" : "") + '</div>'
+        + '<div class="what"><b>' + s.from + '</b> → ' + s.to
+        + '<span>' + s.round + '</span></div>'
+        + '<div class="delta">' + dk
+        + '　蛋白 ' + (s.dp >= 0 ? "+" : "") + fmt(s.dp) + ' g'
+        + '　' + (s.dprice >= 0 ? "+" : "") + s.dprice.toFixed(1) + ' 元</div>'
+        + '</div>';
+    }).join("");
+
+    var gap = "";
+    if(floor){
+      if(p < floor){
+        gap = '<div class="gap">蛋白缺口 ' + fmt(floor - p, 1) + ' g'
+            + (state.mode === "bulk" ? "（同轮次替换补不齐，需另加一份高蛋白单点）" : "（麦当劳单餐补不齐，需另加蛋白来源）")
+            + '</div>';
+      } else if(selected.length){
+        gap = '<div class="gap ok">改完蛋白达标（目标 ' + fmt(floor,1) + ' g）</div>';
+      }
+    }
+
+    var after = selected.length
+      ? '<div class="after"><div>改完 <b>' + fmt(k) + '</b> kcal　蛋白 <b>' + fmt(p) + '</b> g</div>'
+        + '<div>实付 <b>¥' + pr.toFixed(1) + '</b></div></div>'
+      : '<div class="after"><div>未选择改造项，当前为默认配置</div>'
+        + '<div>实付 <b>¥' + (combo.price || 0).toFixed(1) + '</b></div></div>';
+
+    return banner
+      + '<div class="row1"><div class="title">' + combo.name + '</div>' + badge + '</div>'
+      + '<div class="comps">' + combo.comps.map(function(c){ return c.name + (c.qty > 1 ? " ×" + c.qty : ""); }).join(" + ") + '</div>'
+      + '<div class="reason">理由：' + reasonOf(state.mode, stateName) + '</div>'
+      + '<div class="metrics">'
+      +   '<div class="m kcal"><div class="k">热量</div><div class="v">' + fmt(combo.kcal) + '<span class="u">kcal</span></div></div>'
+      +   '<div class="m"><div class="k">蛋白</div><div class="v">' + fmt(combo.protein) + '<span class="u">g</span></div></div>'
+      +   '<div class="m"><div class="k">实付</div><div class="v">¥' + (combo.price || 0).toFixed(1) + '</div></div>'
+      +   '<div class="m"><div class="k">蛋白密度</div><div class="v">' + combo.density + '<span class="u">g/100kcal</span></div></div>'
+      + '</div>'
+      + '<div class="sodium">钠 ' + fmt(combo.sodium) + ' mg<div class="bar"><i style="width:' + sodiumPct + '%"></i></div>' + sodiumPct + '% 日参考</div>'
+      + (sugg.length
+          ? '<div class="change"><h3>改这几处（勾选看效果）</h3>' + items + after + gap + '</div>'
+          : '<div class="change">' + after + gap + '</div>');
+  }
+
+  function renderAlts(plans, idx){
+    return plans.map(function(c, i){
+      return '<button class="alt" data-i="' + i + '" aria-pressed="' + (i === idx ? "true" : "false") + '">'
+        + '<span class="n">' + c.name + '</span>'
+        + '<span class="d">' + fmt(c.kcal) + ' kcal · 蛋白 ' + fmt(c.protein) + ' g · ¥' + (c.price || 0).toFixed(1) + '</span>'
+        + '</button>';
+    }).join("");
+  }
+
+  function renderAll(){
+    var floor = floorFor(state.mode, state.weight);
+    var res = solve(state.mode, state.cap, floor);
+    if(state.idx >= res.plans.length) state.idx = 0;
+    var combo = res.plans[state.idx];
+    if(!combo){ document.getElementById("card").innerHTML = '<div class="banner">没有可用数据。</div>'; return; }
+
+    var sugg = suggestions(combo, state.mode, state.cap);
+    // 切换方案时重置勾选
+    var key = combo.code;
+    if(state._key !== key){ state.on = {}; state._key = key; }
+
+    document.getElementById("card").innerHTML = renderCard(combo, sugg, floor, res.state);
+    document.getElementById("alts").innerHTML = renderAlts(res.plans, state.idx);
+
+    document.getElementById("hint").innerHTML =
+      '蛋白下限按 <b>' + MODES[state.mode].g + ' g/kg</b> 折算到每餐（默认 3 餐）：<b>'
+      + (floor ? fmt(floor,1) + ' g' : '不设') + '</b>。<br>'
+      + '候选池 <b>' + pool.length + '</b> 个可完整计算的套餐，来自门店快照。';
+
+    document.querySelectorAll("#alts .alt").forEach(function(el){
+      el.addEventListener("click", function(){
+        state.idx = +el.dataset.i; state.on = {}; renderAll();
+      });
+    });
+    document.querySelectorAll("#card .item").forEach(function(el){
+      el.addEventListener("click", function(){
+        var i = +el.dataset.i;
+        state.on[i] = !state.on[i];
+        renderAll();
+      });
+      el.addEventListener("keydown", function(e){
+        if(e.key === " " || e.key === "Enter"){ e.preventDefault(); el.click(); }
+      });
+    });
+  }
+
+  // 控件
+  document.querySelectorAll("#mode button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("#mode button").forEach(function(x){ x.setAttribute("aria-pressed","false"); });
+      b.setAttribute("aria-pressed","true");
+      state.mode = b.dataset.mode;
+      state.idx = 0; state.on = {};
+      renderAll();
+    });
+  });
+  var kcal = document.getElementById("kcal");
+  kcal.addEventListener("input", function(){
+    state.cap = +kcal.value;
+    document.getElementById("kcalOut").textContent = state.cap;
+    state.idx = 0; state.on = {};
+    renderAll();
+  });
+  var wt = document.getElementById("weight");
+  wt.addEventListener("input", function(){
+    var v = parseFloat(wt.value);
+    state.weight = isNaN(v) ? 0 : v;
+    state.on = {};
+    renderAll();
+  });
+
+  // 脚注统计
+  var exact = pool.length;
+  var partial = 0;
+  Object.keys(P.details || {}).forEach(function(code){
+    var item = (P.menu.items || {})[code];
+    if(!item) return;
+    var c = buildCombo(code, item, P.details[code]);
+    if(c.status === "partial") partial++;
+  });
+  document.getElementById("foot").innerHTML =
+    '<div class="stats">'
+    + '<div>营养表 <span>' + (P.nutrition.rows || []).length + '</span> 行</div>'
+    + '<div>门店 SKU <span>' + (P.menu.count || 0) + '</span> 个</div>'
+    + '<div>可完整计算 <span>' + exact + '</span> 个套餐</div>'
+    + '<div>组件缺失 <span>' + partial + '</span> 个</div>'
+    + '<div>快照 <span>' + (P.menu.fetchedAt || "") + '</span></div>'
+    + '</div>'
+    + '<div><b>数据说明：</b>热量、蛋白、钠来自麦当劳官方 MCP 营养表（每份口径），价格为门店菜单价，未参与优惠券计算。'
+    + '营养表没有对应行的餐品不会进入推荐，缺失项如实计数，不用估算值顶替。</div>'
+    + '<div style="margin-top:6px">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，不构成营养或医疗建议。</div>';
+
+  window.__demo = {pool: pool, solve: solve, suggestions: suggestions,
+                   state: state, buildCombo: buildCombo, macro: macro, renderAll: renderAll};
+  renderAll();
+})();
+</script>
+</body>
+</html>
