@@ -52,12 +52,19 @@ def short_details():
         for r in d.get("rounds", []):
             choices = []
             for c in r.get("choices", []):
+                mods = []
+                for it in (c.get("modification") or {}).get("items", []) or []:
+                    for v in it.get("values", []) or []:
+                        nm = v.get("name", "")
+                        if nm and nm not in mods:
+                            mods.append(nm)
                 choices.append({
                     "c": c.get("code"), "n": c.get("name", ""),
                     "q": c.get("quantity") or 0,
                     "d": c.get("isDefault") or 0,
                     "dp": c.get("diffPrice") or "+ ¥0",
                     "m": 1 if c.get("supportModify") else 0,
+                    "mods": mods,
                 })
             rounds.append({"n": r.get("name", ""), "c": choices})
         out[fn[:-5]] = {"n": d.get("name", ""), "r": rounds}
@@ -74,9 +81,11 @@ def main():
     taste = json.load(open(os.path.join(DATA, "taste.json"), encoding="utf-8"))
     zero = json.load(open(os.path.join(DATA, "zero_whitelist.json"), encoding="utf-8"))
     aliases = json.load(open(os.path.join(DATA, "aliases.json"), encoding="utf-8"))
+    derived = json.load(open(os.path.join(DATA, "derived.json"), encoding="utf-8"))
     payload["taste"] = taste
     payload["zero"] = zero.get("names", [])
     payload["aliases"] = aliases.get("aliases", {})
+    payload["derived"] = derived.get("rules", {})
     payload["factors"] = {k: v for k, v in factors.items() if not k.startswith("_")}
 
     blob = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

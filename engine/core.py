@@ -68,6 +68,11 @@ def load_aliases():
     return {norm(k): norm(v) for k, v in (d.get("aliases") or {}).items()}
 
 
+def load_derived():
+    d = _read("derived.json", {})
+    return {norm(k): v for k, v in (d.get("rules") or {}).items()}
+
+
 # ---------------------------------------------------------------- 对齐
 
 def norm(s):
@@ -91,13 +96,14 @@ def num(v):
 
 
 class Book:
-    """营养表。按名称对齐，重名取第一条并记录；别名表用于命名差异。"""
+    """营养表。按名称对齐，重名取第一条；别名处理命名差异，倍数规则处理离散件数。"""
 
-    def __init__(self, rows, aliases=None):
+    def __init__(self, rows, aliases=None, derived=None):
         self.rows = rows
         self.index = {}
         self.dups = []
         self.aliases = aliases or {}
+        self.derived = derived or {}
         self.alias_hits = []
         for r in rows:
             k = norm(r["name"])
@@ -107,7 +113,7 @@ class Book:
             self.index[k] = r
 
     def resolve(self, name):
-        """返回 (row, 'exact'|'alias') 或 (None, None)。"""
+        """返回 (row, 'exact'|'alias'|'derived') 或 (None, None)。"""
         k = norm(name)
         if k in self.index:
             return self.index[k], "exact"
@@ -115,6 +121,20 @@ class Book:
         if target and target in self.index:
             self.alias_hits.append(name)
             return self.index[target], "alias"
+        rule = self.derived.get(k)
+        if rule:
+            base = self.index.get(norm(rule.get("base", "")))
+            try:
+                f = float(rule.get("factor", 1))
+            except (TypeError, ValueError):
+                f = 1.0
+            if base:
+                row = dict(base)
+                row["name"] = name
+                for fld in ("kj", "kcal", "protein", "fat", "carb", "sodium", "calcium"):
+                    v = num(base.get(fld))
+                    row[fld] = "" if v is None else round(v * f, 1)
+                return row, "derived"
         return None, None
 
     def get(self, name):
@@ -191,11 +211,14 @@ class Combo:
         self.sodium = 0.0
         self.missing = []
         self.alias_comp = 0
+        self.derived_comp = 0
         for c in self.comps:
             row, src = book.resolve(c["name"])
             m = macro_row(row, c["name"], zero_ok)
             if src == "alias":
                 self.alias_comp += 1
+            elif src == "derived":
+                self.derived_comp += 1
             self.rows.append((c, m))
             if m is None:
                 self.missing.append(c["name"])
@@ -345,7 +368,8 @@ def modification_notes(combo, factors, limit=3):
                 if not f or f.get("kcal") is None:
                     continue
                 notes.append({"target": comp["name"], "name": name,
-                              "d_kcal": -f["kcal"], "d_sodium": -(f.get("sodium") or 0),
+                              "d_kcal": -f["kcal"],
+                              "d_sodium": (-f["sodium"] if f.get("sodium") is not None else None),
                               "tag": "估算", "confidence": f.get("confidence", "low")})
     return notes[:limit]
 
@@ -446,7 +470,10 @@ def render(combo, sugg, notes, mode, cap, protein_floor, state="ok"):
     price = f"¥{combo.base_price:.1f}" if combo.base_price is not None else "价格未知"
     L.append(f"实付 {price}（菜单价）· 热量 {combo.kcal:.0f} kcal · 蛋白 {combo.protein:.0f} g")
     L.append(f"蛋白密度 {combo.density} g/100kcal · 钠 {combo.sodium:.0f} mg（{combo.sodium_pct:.0f}% 日参考）")
-    L.append(f"数据：exact {combo.hit_comp}/{combo.total_comp} 组件")
+    tag = f"exact {combo.hit_comp}/{combo.total_comp} 组件"
+    if combo.derived_comp:
+        tag += f"（含 {combo.derived_comp} 项按倍数推导）"
+    L.append(f"数据：{tag}")
 
     fin_k = combo.kcal
     fin_p = combo.protein
@@ -468,9 +495,13 @@ def render(combo, sugg, notes, mode, cap, protein_floor, state="ok"):
 
     if notes:
         L.append("")
-        L.append("可特调（热量未计，缺数据）：")
+        L.append("可特调（估算值，跨市场参考，未与上方数值相加）：")
         for n in notes:
-            L.append(f"  · {n['target']} 去{n['name']}  [{n['tag']}]")
+            seg = f"  · {n['target']} 去{n['name']}  {n['d_kcal']:+.0f} kcal"
+            if n.get("d_sodium") is not None:
+                seg += f"  {n['d_sodium']:+.0f} mg 钠"
+            seg += f"  [{n['tag']}·{n['confidence']}]"
+            L.append(seg)
 
     if protein_floor and fin_p < protein_floor:
         tail = "（同轮次替换补不齐，需另加一份高蛋白单点）" if mode == "bulk" \

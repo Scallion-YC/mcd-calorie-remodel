@@ -22,7 +22,7 @@ import core  # noqa: E402
 
 def load_all():
     rows, ts = core.load_nutrition()
-    book = core.Book(rows, core.load_aliases())
+    book = core.Book(rows, core.load_aliases(), core.load_derived())
     menu = core.load_menu()
     details = core.load_details()
     zero = core.load_zero_whitelist()
@@ -39,9 +39,10 @@ def cmd_coverage(args):
     total_comp = sum(c.total_comp for c in pool)
     hit_comp = sum(c.hit_comp for c in pool)
     alias_comp = sum(c.alias_comp for c in pool)
+    derived_comp = sum(c.derived_comp for c in pool)
     print(f"\n可完整计算（exact）的套餐：{len(pool)} 个")
     print(f"组件级命中：{hit_comp}/{total_comp} = {hit_comp/total_comp:.0%}"
-          f"（其中别名匹配 {alias_comp} 项）" if total_comp else "组件级命中：0")
+          f"（别名 {alias_comp} 项，倍数推导 {derived_comp} 项）" if total_comp else "组件级命中：0")
 
     partial = []
     for code, d in details.items():

@@ -94,6 +94,11 @@
   .after b{font-variant-numeric:tabular-nums;font-size:16px}
   .gap{margin-top:12px;font-size:13px;color:var(--amber);line-height:1.7}
   .gap.ok{color:var(--green)}
+  .notes{margin-top:16px;padding-top:14px;border-top:1px dashed var(--line)}
+  .notes h4{font-size:12.5px;color:var(--muted);font-weight:500;margin:0 0 8px}
+  .note{font-size:13px;color:#5A544B;line-height:1.9;font-variant-numeric:tabular-nums}
+  .note b{color:var(--ink)}
+  .note span{font-size:11px;color:#9A9083;border:1px solid var(--line);border-radius:999px;padding:1px 6px;margin-left:4px}
 
   .alts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
   @media(max-width:700px){.alts{grid-template-columns:1fr}}
@@ -183,17 +188,23 @@
   });
 
   var ALIAS = P.aliases || {};
+  var DERIVED = P.derived || {};
   var aliasHits = 0;
 
   function macro(name){
     var key = norm(name);
-    var r = BOOK[key];
-    if(!r && ALIAS[key]){ r = BOOK[ALIAS[key]]; if(r) aliasHits++; }
+    var r = BOOK[key], scale = 1;
+    if(!r && ALIAS[key]){ r = BOOK[ALIAS[key]]; }
+    if(!r && DERIVED[key]){
+      var rule = DERIVED[key];
+      r = BOOK[norm(rule.base)];
+      scale = rule.factor || 1;
+    }
     if(!r) return null;
     var k = num(r.k), p = num(r.p), na = num(r.na);
     if(k === null && p === null && na === null) return null;
-    if(k === 0 && !ZERO[key]) return null;
-    return [k || 0, p || 0, na || 0];
+    if(k === 0 && scale === 1 && !ZERO[key]) return null;
+    return [k === null ? 0 : k * scale, p === null ? 0 : p * scale, na === null ? 0 : na * scale];
   }
 
   function parseDiff(s){
@@ -240,12 +251,17 @@
     return c;
   }
 
+  var MULTI_KW = ["分享", "双人", "多人", "拼盘", "拼单"];
   var pool = [];
   Object.keys(P.details || {}).forEach(function(code){
     var item = (P.menu.items || {})[code];
     if(!item) return;
     var c = buildCombo(code, item, P.details[code]);
-    if(c.status === "exact" && c.hasMain) pool.push(c);
+    if(c.status !== "exact" || !c.hasMain) return;
+    for(var i=0;i<MULTI_KW.length;i++){
+      if(c.name.indexOf(MULTI_KW[i]) >= 0) return;
+    }
+    pool.push(c);
   });
 
   function floorFor(mode, weight){
@@ -351,6 +367,27 @@
     return {cut: "同额度内蛋白密度最高", bulk: "同额度内蛋白性价比最高", keep: "最接近你给的额度"}[mode] || "";
   }
 
+  function modNotes(combo){
+    var out = [], d = P.details[combo.code];
+    if(!d) return out;
+    combo.comps.forEach(function(cp){
+      (d.r || []).forEach(function(rd){
+        (rd.c || []).forEach(function(c){
+          if(c.c !== cp.code) return;
+          (c.mods || []).forEach(function(nm){
+            var f = (P.factors || {})[nm];
+            if(f && f.kcal !== null && f.kcal !== undefined){
+              out.push({target: cp.name, name: nm, k: -f.kcal,
+                        na: (f.sodium === null || f.sodium === undefined) ? null : -f.sodium,
+                        conf: f.confidence || "low"});
+            }
+          });
+        });
+      });
+    });
+    return out;
+  }
+
   function renderCard(combo, sugg, floor, stateName){
     var selected = sugg.filter(function(s, i){ return state.on[i]; });
     var k = combo.kcal, p = combo.protein, pr = combo.price || 0;
@@ -401,6 +438,18 @@
       : '<div class="after"><div>未选择改造项，当前为默认配置</div>'
         + '<div>实付 <b>¥' + (combo.price || 0).toFixed(1) + '</b></div></div>';
 
+    var notes = modNotes(combo);
+    var notesHtml = notes.length
+      ? '<div class="notes"><h4>可特调（估算值，跨市场参考，未计入上方数值）</h4>'
+        + notes.slice(0,3).map(function(n){
+            return '<div class="note">' + n.target + ' 去' + n.name
+              + '　<b>' + fmt(n.k) + ' kcal</b>'
+              + (n.na === null ? '' : '　' + fmt(n.na) + ' mg 钠')
+              + '　<span>' + n.conf + '</span></div>';
+          }).join('')
+        + '</div>'
+      : '';
+
     return banner
       + '<div class="row1"><div class="title">' + combo.name + '</div>' + badge + '</div>'
       + '<div class="comps">' + combo.comps.map(function(c){ return c.name + (c.qty > 1 ? " ×" + c.qty : ""); }).join(" + ") + '</div>'
@@ -413,8 +462,8 @@
       + '</div>'
       + '<div class="sodium">钠 ' + fmt(combo.sodium) + ' mg<div class="bar"><i style="width:' + sodiumPct + '%"></i></div>' + sodiumPct + '% 日参考</div>'
       + (sugg.length
-          ? '<div class="change"><h3>改这几处（勾选看效果）</h3>' + items + after + gap + '</div>'
-          : '<div class="change">' + after + gap + '</div>');
+          ? '<div class="change"><h3>改这几处（勾选看效果）</h3>' + items + after + gap + notesHtml + '</div>'
+          : '<div class="change">' + after + gap + notesHtml + '</div>');
   }
 
   function renderAlts(plans, idx){
@@ -505,8 +554,8 @@
     + '<div>组件缺失 <span>' + partial + '</span> 个</div>'
     + '<div>快照 <span>' + (P.menu.fetchedAt || "") + '</span></div>'
     + '</div>'
-    + '<div><b>数据说明：</b>热量、蛋白、钠来自麦当劳官方 MCP 营养表（每份口径），价格为门店菜单价，未参与优惠券计算。'
-    + '营养表没有对应行的餐品不会进入推荐，缺失项如实计数，不用估算值顶替。</div>'
+    + '<div><b>数据说明：</b>热量、蛋白、钠来自麦当劳官方 MCP 营养表（每份口径），价格为门店菜单价，未参与优惠券计算。营养表没有对应行的餐品不会进入推荐，缺失项如实计数，不用估算值顶替。'
+    + '酱料类特调数值来自麦当劳台湾官网营养计算器（中国大陆官网无配料级数据），属跨市场参考，单独标注且不计入上方数值。</div>'
     + '<div style="margin-top:6px">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，不构成营养或医疗建议。</div>';
 
   window.__demo = {pool: pool, solve: solve, suggestions: suggestions,

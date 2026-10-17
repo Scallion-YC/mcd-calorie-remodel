@@ -57,7 +57,7 @@ check("keep/700 落在 ±10%", Math.abs(r3.plans[0].kcal - 700) <= 70,
 check("零卡白名单生效（无糖可乐）", !!E.macro("无糖可口可乐中杯"));
 check("别名命中（原味双层深海鳕鱼堡）", !!E.macro("原味双层深海鳕鱼堡"));
 check("页面已渲染卡片", nodes["card"] && nodes["card"].innerHTML.length > 200);
-check("脚注含 29 个可计算", nodes["foot"] && nodes["foot"].innerHTML.indexOf(">29<") >= 0);
+check("脚注含 31 个可计算", nodes["foot"] && nodes["foot"].innerHTML.indexOf(">31<") >= 0);
 
 console.log("\n" + pass + " 通过 / " + fail + " 失败");
 process.exit(fail ? 1 : 0);
