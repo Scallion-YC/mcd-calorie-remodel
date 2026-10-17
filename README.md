@@ -184,13 +184,13 @@ python engine/verify.py --limit 8
 
 ```mermaid
 flowchart LR
-  A[query-meals<br/>120 个 SKU] --> B[筛候选<br/>排除多人餐/分享餐]
-  B --> C[query-meal-detail<br/>拆到组件]
-  C --> D[按名称对齐<br/>list-nutrition-foods]
-  D --> E[硬约束过滤<br/>热量 + 蛋白]
-  E --> F[按模式排序]
-  F --> G[同轮次替换<br/>算四项差值]
-  G --> H[方案卡]
+  A["菜单：120 个 SKU"] --> B["筛候选"]
+  B --> C["拆到组件"]
+  C --> D["对齐营养表"]
+  D --> E["热量与蛋白过滤"]
+  E --> F["按模式排序"]
+  F --> G["换配算差值"]
+  G --> H["方案卡"]
 ```
 
 三条工程规则：
