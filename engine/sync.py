@@ -92,14 +92,38 @@ class Mcp:
     def call(self, name, args):
         res = self.rpc("tools/call", {"name": name, "arguments": args})
         text = "\n".join(c.get("text", "") for c in res.get("content", []) if c.get("type") == "text")
-        i = text.find("## Original Response")
-        if i != -1:
-            blob = text[i:].split("\n", 1)[1].lstrip()
-        else:
-            # 部分工具（如 delivery-query-addresses）在 JSON 前夹了说明表格
-            j = text.find('{"success"')
-            blob = text[j:] if j != -1 else text.lstrip()
-        return json.JSONDecoder().raw_decode(blob)[0]
+        return _extract_json(text)
+
+
+def _extract_json(text):
+    """从工具返回里取出 JSON。
+
+    两种形态：一种是「## Original Response」之后跟 JSON；另一种（如
+    delivery-query-addresses）前面拼了 Markdown 说明表格，需要从第一个
+    '{' 起逐个位置试解析。
+    """
+    dec = json.JSONDecoder()
+    i = text.find("## Original Response")
+    if i != -1:
+        blob = text[i:].split("\n", 1)[1].lstrip()
+        try:
+            return dec.raw_decode(blob)[0]
+        except ValueError:
+            pass
+
+    idx = 0
+    while True:
+        k = text.find("{", idx)
+        if k == -1:
+            break
+        try:
+            obj, _ = dec.raw_decode(text[k:])
+            if isinstance(obj, (dict, list)):
+                return obj
+        except ValueError:
+            pass
+        idx = k + 1
+    raise ValueError("响应中没有可解析的 JSON：%s" % text[:120].replace("\n", " "))
 
 
 def combo_like(name):

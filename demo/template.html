@@ -243,6 +243,7 @@
       } else {
         c.missing.push(cp.name);
       }
+      if(DERIVED[norm(cp.name)]) c.derived = (c.derived || 0) + 1;
       MAIN_KW.forEach(function(k){ if(cp.name.indexOf(k) >= 0) c.hasMain = true; });
     });
     c.density = c.kcal ? +(c.protein / c.kcal * 100).toFixed(2) : 0;
@@ -394,7 +395,8 @@
     selected.forEach(function(s){ k += s.dk; p += s.dp; pr += s.dprice; });
 
     var badge = combo.status === "exact"
-      ? '<span class="badge ok">数据 exact ' + combo.hit + '/' + combo.total + ' 组件</span>'
+      ? '<span class="badge ok">数据 exact ' + combo.hit + '/' + combo.total + ' 组件'
+        + (combo.derived ? '（含 ' + combo.derived + ' 项推导）' : '') + '</span>'
       : '<span class="badge partial">覆盖率 ' + combo.hit + '/' + combo.total + '</span>';
 
     var banner = "";
