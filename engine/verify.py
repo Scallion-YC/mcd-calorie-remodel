@@ -30,7 +30,7 @@ def main():
         return 2
 
     rows, _ = core.load_nutrition()
-    book = core.Book(rows, core.load_aliases())
+    book = core.Book(rows, core.load_aliases(), core.load_derived())
     menu = core.load_menu()
     details = core.load_details()
     zero = core.load_zero_whitelist()

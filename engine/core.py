@@ -494,6 +494,10 @@ def render(combo, sugg, notes, mode, cap, protein_floor, state="ok"):
         L.append(f"⚠ 这个额度内没有套餐能达到蛋白 {protein_floor:g} g"
                  f"（当前最高 {combo.protein:.0f} g）。以下为最接近的方案，缺口照实列出。")
         L.append("")
+    elif state == "kcal_over":
+        L.append(f"⚠ 没有套餐低于 {cap:.0f} kcal（最低 {combo.kcal:.0f} kcal）。"
+                 "以下为热量最低的方案，已超出你的额度。")
+        L.append("")
 
     names = " + ".join(c["name"] for c in combo.comps)
     L.append(f"推荐：{combo.name}")
