@@ -381,6 +381,9 @@ def suggestions(combo, book, zero_ok, mode, cap, taste, limit=3):
     return picked
 
 
+NOTE_MIN_KCAL = 10  # 低于 10 kcal 的特调项不展示，避免「去番茄酱 −1 卡」这类噪音
+
+
 def modification_notes(combo, factors, limit=3):
     """特调建议。factors 里没有可靠数值的一律不参与计算。"""
     notes = []
@@ -397,14 +400,31 @@ def modification_notes(combo, factors, limit=3):
             for v in item.get("values", []) or []:
                 name = v.get("name", "")
                 f = factors.get(name)
-                if not f or f.get("kcal") is None:
+                if not f:
+                    continue
+                est = f.get("estimate")
+                if f.get("kcal") is None:
+                    if not est:
+                        continue
+                    lo, hi = est.get("lo"), est.get("hi")
+                    if lo is None or hi is None:
+                        continue
+                    notes.append({"target": comp["name"], "name": name,
+                                  "k_lo": -hi, "k_hi": -lo, "k_mid": -(lo + hi) / 2,
+                                  "d_sodium": None, "unit": f.get("unit", ""),
+                                  "tag": "估算", "confidence": f.get("confidence", "low"),
+                                  "why": f.get("estimate_why", "")})
                     continue
                 notes.append({"target": comp["name"], "name": name,
+                              "k_lo": None, "k_hi": None,
                               "d_kcal": -f["kcal"],
                               "d_sodium": (-f["sodium"] if f.get("sodium") is not None else None),
                               "unit": f.get("unit", ""),
                               "tag": "估算", "confidence": f.get("confidence", "low")})
-    return notes[:limit]
+    def _abs_k(n):
+        return abs(n["k_mid"]) if n.get("k_mid") is not None else abs(n["d_kcal"])
+
+    return [n for n in notes if _abs_k(n) >= NOTE_MIN_KCAL][:limit]
 
 
 # ---------------------------------------------------------------- 求解
@@ -535,7 +555,11 @@ def render(combo, sugg, notes, mode, cap, protein_floor, state="ok"):
         L.append("可特调（估算值，跨市场参考，未与上方数值相加）：")
         for n in notes:
             unit = f"（1 {n['unit']}）" if n.get("unit") else ""
-            seg = f"  · {n['target']} 去{n['name']}{unit}  {n['d_kcal']:+.0f} kcal"
+            if n.get("k_lo") is not None:
+                kcal = f"约 {n['k_lo']:+.0f} ~ {n['k_hi']:+.0f} kcal"
+            else:
+                kcal = f"{n['d_kcal']:+.0f} kcal"
+            seg = f"  · {n['target']} 去{n['name']}{unit}  {kcal}"
             if n.get("d_sodium") is not None:
                 seg += f"  {n['d_sodium']:+.0f} mg 钠"
             seg += f"  [{n['tag']}·{n['confidence']}]"

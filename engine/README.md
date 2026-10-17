@@ -16,7 +16,7 @@ engine/
     ├── aliases.json        命名差异（可口可乐中杯→可乐中杯）
     ├── derived.json        倍数推导（4 块鸡翅 = 2 块 × 2）
     ├── estimates.json      当季新品区间估算（3 项）
-    ├── factors.json        特调因子表（4 项有值，标 low）
+    ├── factors.json        特调因子表（8 项，均来自真实特调项）
     ├── taste.json          口感代价权重
     └── zero_whitelist.json 0 卡白名单（4 条，已核对）
 ```
@@ -45,7 +45,7 @@ python engine/cli.py estimate --name 龙焰鸡腿堡
 # 6) 外送
 python engine/delivery.py --mode cut --kcal 900 --weight 70
 
-# 7) 自测（12 项验收，离线）
+# 7) 自测（14 项验收，离线）
 python engine/cli.py selftest
 ```
 
@@ -62,5 +62,5 @@ python engine/cli.py selftest
 - 组件级命中：107/107（别名 6 项，倍数推导 1 项）
 - partial：5 个，卡在当季新品（龙焰系列、大堡口福）
 - 菜单价与 `calculate-price` 抽样 8 个，8/8 一致（`python engine/verify.py --limit 8`）
-- 特调因子表已填 4 项（麦香鸡酱/麦香鱼酱/吉士/生菜），来源为台湾官网，标 `low`，不计入主数值
+- 特调因子表 8 项（麦香鸡酱/麦香鱼酱/吉士/培根/生菜/切块生菜/黄油/番茄酱），来源为台湾官网，标 `low`，不计入主数值；低于 10 kcal 的项不展示
 - 减脂/增肌的蛋白下限在麦当劳单餐基本不可达（37 g / 42 g），引擎会降级并如实报缺口

@@ -1,11 +1,14 @@
 {
-  "_comment": "特调因子表。键名必须与 query-meal-detail 返回的 modification.values[].name 完全一致，否则匹配不上。kcal 为 null 表示未知，未知项不参与计算。",
+  "_comment": "特调因子表。键名必须与 query-meal-detail 返回的 modification.values[].name 完全一致，否则匹配不上。只收录真实出现过的特调项。",
   "_updated": "2026-10-17",
-  "_source": "麦当劳台湾官网营养计算器（经百度健康整理）。中国大陆官网只公布餐品六项营养，无配料级数据，故此处为跨市场参考值。",
-  "_confidence_rule": "跨市场参考一律 low；只有大陆官方数据才可标 medium。",
+  "_source": "麦当劳台湾官网营养计算器（经百度健康整理）。中国大陆官网只公布餐品六项营养，无配料级数据，故均为跨市场参考。",
+  "_confidence_rule": "跨市场参考一律 low；只有大陆官方数据才可标 medium。区间估算不得与 exact 数值混算。",
   "麦香鸡酱": {"kcal": 68, "protein": 0.2, "sodium": null, "unit": "份", "source": "台湾官网营养计算器", "confidence": "low"},
   "麦香鱼酱": {"kcal": 48, "protein": 0.2, "sodium": null, "unit": "份", "source": "台湾官网营养计算器", "confidence": "low"},
   "吉士":     {"kcal": 49, "protein": 2.8, "sodium": null, "unit": "片", "source": "台湾官网营养计算器（芝士片·麦芬堡系列）", "confidence": "low"},
   "切块生菜": {"kcal": 2, "protein": 0.1, "sodium": 0, "unit": "份", "source": "台湾官网营养计算器（切片生菜）", "confidence": "low"},
-  "生菜":     {"kcal": 2, "protein": 0.1, "sodium": 0, "unit": "份", "source": "台湾官网营养计算器（切片生菜）", "confidence": "low"}
+  "生菜":     {"kcal": 2, "protein": 0.1, "sodium": 0, "unit": "份", "source": "台湾官网营养计算器（切片生菜）", "confidence": "low"},
+  "培根":     {"kcal": 31, "protein": 2, "sodium": null, "unit": "份", "source": "台湾官网营养计算器（厚切培根）", "confidence": "low"},
+  "黄油":     {"kcal": 2, "protein": 0, "sodium": 0, "unit": "份", "source": "台湾官网营养计算器（无盐奶油）", "confidence": "low"},
+  "番茄酱":   {"kcal": 1, "protein": 0, "sodium": null, "unit": "份", "source": "台湾官网营养计算器（早餐番茄酱）", "confidence": "low"}
 }

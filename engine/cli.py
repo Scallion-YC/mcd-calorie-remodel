@@ -190,6 +190,31 @@ def cmd_selftest(args):
     else:
         check("estimates.json 非空", False)
 
+    print("\n验收 8：因子表键名与区间估算")
+    fac = core.load_factors()
+    real = set()
+    for d in details.values():
+        for rd in d.get("rounds", []) or []:
+            for ch in rd.get("choices", []) or []:
+                for it in (ch.get("modification") or {}).get("items", []) or []:
+                    for v in it.get("values", []) or []:
+                        real.add(v.get("name", ""))
+    dead = [k for k in fac if not k.startswith("_") and k not in real]
+    check("因子表没有真实数据里不存在的键", not dead, str(dead))
+
+    host = next((c for c in pool
+                 if any(n["name"] == "麦香鸡酱" for n in core.modification_notes(c, fac))), None)
+    if host:
+        tmp = dict(fac)
+        tmp["麦香鸡酱"] = {"kcal": None, "estimate": {"lo": 60, "hi": 75},
+                       "unit": "份", "confidence": "low"}
+        rng = [n for n in core.modification_notes(host, tmp) if n["name"] == "麦香鸡酱"]
+        check("无定值时改走区间（k_lo / k_hi）",
+              bool(rng) and rng[0].get("k_lo") == -75 and rng[0].get("k_hi") == -60,
+              str(rng[:1]))
+    else:
+        check("找到含麦香鸡酱的套餐", False)
+
     print(f"\n{ok} 通过 / {fail} 失败")
     return 0 if fail == 0 else 1
 

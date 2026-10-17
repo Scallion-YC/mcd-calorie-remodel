@@ -377,17 +377,28 @@
           if(c.c !== cp.code) return;
           (c.mods || []).forEach(function(nm){
             var f = (P.factors || {})[nm];
-            if(f && f.kcal !== null && f.kcal !== undefined){
-              out.push({target: cp.name, name: nm, k: -f.kcal,
-                        na: (f.sodium === null || f.sodium === undefined) ? null : -f.sodium,
-                        unit: f.unit || "",
-                        conf: f.confidence || "low"});
+            if(!f) return;
+            if(f.kcal === null || f.kcal === undefined){
+              var est = f.estimate;
+              if(!est || est.lo === null || est.lo === undefined ||
+                 est.hi === null || est.hi === undefined) return;
+              out.push({target: cp.name, name: nm, klo: -est.hi, khi: -est.lo,
+                        unit: f.unit || "", conf: f.confidence || "low"});
+              return;
             }
+            out.push({target: cp.name, name: nm, k: -f.kcal,
+                      na: (f.sodium === null || f.sodium === undefined) ? null : -f.sodium,
+                      unit: f.unit || "",
+                      conf: f.confidence || "low"});
           });
         });
       });
     });
-    return out;
+    return out.filter(function(n){
+      var v = (n.klo !== undefined && n.klo !== null)
+        ? Math.abs((n.klo + n.khi) / 2) : Math.abs(n.k);
+      return v >= 10;
+    });
   }
 
   function renderCard(combo, sugg, floor, stateName){
@@ -445,10 +456,13 @@
     var notesHtml = notes.length
       ? '<div class="notes"><h4>可特调（估算值，跨市场参考，未计入上方数值）</h4>'
         + notes.slice(0,3).map(function(n){
+            var kc = (n.klo !== undefined && n.klo !== null)
+              ? '约 ' + fmt(n.klo) + ' ~ ' + fmt(n.khi) + ' kcal'
+              : fmt(n.k) + ' kcal';
             return '<div class="note">' + n.target + ' 去' + n.name
               + (n.unit ? '（1 ' + n.unit + '）' : '')
-              + '　<b>' + fmt(n.k) + ' kcal</b>'
-              + (n.na === null ? '' : '　' + fmt(n.na) + ' mg 钠')
+              + '　<b>' + kc + '</b>'
+              + (n.na === null || n.na === undefined ? '' : '　' + fmt(n.na) + ' mg 钠')
               + '　<span>' + n.conf + '</span></div>';
           }).join('')
         + '</div>'
