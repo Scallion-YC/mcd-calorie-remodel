@@ -53,7 +53,8 @@ def main():
             cents = data.get("price")
             official = cents / 100 if isinstance(cents, (int, float)) else None
             if official is None:
-                print(f"{c.name[:22]:24} {c.base_price:7.1f} {'—':>9} {'无 price 字段':>7}")
+                reason = r.get("message") or "响应无 price 字段"
+                print(f"{c.name[:22]:24} {c.base_price:7.1f} {'—':>9} {reason[:18]:>7}")
                 err += 1
                 continue
             d = official - (c.base_price or 0)
