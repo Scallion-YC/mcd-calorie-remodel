@@ -93,7 +93,12 @@ class Mcp:
         res = self.rpc("tools/call", {"name": name, "arguments": args})
         text = "\n".join(c.get("text", "") for c in res.get("content", []) if c.get("type") == "text")
         i = text.find("## Original Response")
-        blob = (text[i:].split("\n", 1)[1] if i != -1 else text).lstrip()
+        if i != -1:
+            blob = text[i:].split("\n", 1)[1].lstrip()
+        else:
+            # 部分工具（如 delivery-query-addresses）在 JSON 前夹了说明表格
+            j = text.find('{"success"')
+            blob = text[j:] if j != -1 else text.lstrip()
         return json.JSONDecoder().raw_decode(blob)[0]
 
 

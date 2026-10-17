@@ -46,6 +46,8 @@ Token 只从环境变量读取，仓库内无任何凭证。
 | `list-nutrition-foods` | 官方营养表 | 无 | TOON 文本，160 行 × 9 列 |
 | `calculate-price` | 最终核价 | 三个基础参数 + `items[]` | `price` 单位是**分** |
 | `order-list` | 取历史门店 `storeCode` | 无 | 无历史订单时返回空列表 |
+| `delivery-query-addresses` | 外送：列已存地址 | 无 | 返回体前面夹了说明表格，解析要容错 |
+| `delivery-query-stores` | 外送：按地址找门店 | `beType`、`addressId` | `data` 直接是数组，带 `storeCode` 与 `beCode` |
 
 ### 参数枚举
 
@@ -158,6 +160,11 @@ MCP 把菜单、营养、价格、优惠开放成了原子接口，但**原子�
 | 4 行能量为 0 | 逐条核对后确认都是真零卡（无糖可乐三档 + 纯悦） |
 | 服务端 35 个工具 | 比文档多 `query-survey-coupon`、`query-promotions` |
 | 菜单价与核价一致 | 抽样 8 个套餐，`calculate-price` 与菜单价 8/8 一致（无券场景） |
+| 外送必须带 `beCode` | 只传 `storeCode + orderType=2 + beType=2` 会返回 **0 个 SKU，且不报错**；补上 `beCode` 才有 116 个 |
+| 外送商品价 ≠ 到店价 | 同一套餐到店 39.5、外送 40.5；不能拿到店价加运费推到手价 |
+| 外送费用字段 | `calculate-price` 返回 `deliveryPrice`（6.0）与 `packingPrice`（1.9），需自行相加校验 |
+| 外卖菜单命名与营养表不一致 | 外卖叫「可口可乐中杯」，营养表叫「可乐中杯」，同一集团内两套命名；别名表补齐后外送可算率 2/36 → 24/36 |
+| 地址查询返回夹带说明文本 | `delivery-query-addresses` 在 JSON 前拼了一段 Markdown 表格，按纯 JSON 解析会失败 |
 
 完整实测数据见 `实测报告.md`，探针为 `probe/mcp_probe.py`。
 
@@ -165,9 +172,11 @@ MCP 把菜单、营养、价格、优惠开放成了原子接口，但**原子�
 
 ## 7. 权限与安全边界
 
-**会调用**：`query-nearby-stores`、`query-meals`、`query-meal-detail`、`list-nutrition-foods`、`calculate-price`、`order-list`。
+**会调用**：`query-nearby-stores`、`query-meals`、`query-meal-detail`、`list-nutrition-foods`、`calculate-price`、`order-list`、`delivery-query-addresses`、`delivery-query-stores`。
 
 **不会调用**：`create-order`、`cancel-order`、`auto-bind-coupons`、`draw-lottery`、`mall-create-order`、`party-order-create`、`delivery-create-address`。
+
+外送只使用账号里已保存的地址，脚本输出隐去地址、联系人、电话；不创建地址、不下单。
 
 代码层面用白名单外的黑名单硬拒，见 `probe/mcp_probe.py` 的 `FORBIDDEN` 集合。
 

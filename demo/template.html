@@ -556,7 +556,8 @@
     + '</div>'
     + '<div><b>数据说明：</b>热量、蛋白、钠来自麦当劳官方 MCP 营养表（每份口径），价格为门店菜单价，未参与优惠券计算。营养表没有对应行的餐品不会进入推荐，缺失项如实计数，不用估算值顶替。'
     + '酱料类特调数值来自麦当劳台湾官网营养计算器（中国大陆官网无配料级数据），属跨市场参考，单独标注且不计入上方数值。</div>'
-    + '<div style="margin-top:6px">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，不构成营养或医疗建议。</div>';
+    + '<div style="margin-top:6px">本项目为参赛作品，非麦当劳官方产品；输出仅供参考，不构成营养或医疗建议。'
+    + '本页为到店口径的数据快照，外送场景见 <code>engine/delivery.py</code>（热量算法相同，另计配送与包装费）。</div>';
 
   window.__demo = {pool: pool, solve: solve, suggestions: suggestions,
                    state: state, buildCombo: buildCombo, macro: macro, renderAll: renderAll};

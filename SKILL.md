@@ -47,20 +47,35 @@ agent_created: true
 - 增肌 1.8 g/kg ÷ 3 餐
 - 维持不设
 
-### 第 2 步 · 确定门店
+### 第 2 步 · 确定门店与渠道
 
-调 `query-nearby-stores`（`beType=1` 到店自取；`searchType=1` 搜收藏餐厅，`2` 按位置），把结果列给用户选一家，记下 `storeCode`。
+先问一句到店还是外送，两条路走的接口不同：
 
-不要替用户随便选一家，热量和价格都跟门店走。
+| 渠道 | 找门店 | 必须参数 |
+|---|---|---|
+| 到店 | `query-nearby-stores` | `beType=1`，`searchType=1` 收藏 / `2` 按位置 |
+| 外送 | `delivery-query-stores` | `beType=2` + `addressId` |
+
+外送只能用账号里已保存的地址（`delivery-query-addresses` 查），**不要创建新地址**。把门店列给用户选，记下 `storeCode`；外送还要记 `beCode`。
+
+两个坑：外送 `query-meals` 漏了 `beCode` 会返回 0 个 SKU 且不报错；外卖商品价可能高于到店，不能拿到店价加运费推到手价。
+
+热量和价格都跟门店走，不要替用户随便选。
 
 ### 第 3 步 · 出方案
 
 ```bash
-python engine/sync.py --store-code <storeCode>     # 首次或菜单过期时
+# 到店
+python engine/sync.py --store-code <storeCode>
 python engine/cli.py plan --mode cut --kcal 600 --weight 70
+
+# 外送
+python engine/delivery.py --mode cut --kcal 900 --weight 70
 ```
 
 `--mode` 取 `cut` / `bulk` / `keep`。脚本输出方案卡，直接按卡片结构呈现，不要改写数字。
+
+外送与到店共用一套营养算法，差异只在费用与渠道定价；外送卡片要同时给出商品价、配送费、包装费和到手价。
 
 如果用户点名了某个套餐（「我就想吃巨无霸三件套」），不要走排序，直接用 `python engine/cli.py list` 找到它，再单独算改造建议。
 
