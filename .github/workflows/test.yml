@@ -1,0 +1,31 @@
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  engine:
+    name: 引擎自测
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 编译检查
+        run: python -m py_compile engine/core.py engine/cli.py engine/sync.py engine/verify.py engine/delivery.py
+      - name: 离线自测
+        run: python engine/cli.py selftest
+
+  demo:
+    name: 页面运行时测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: 跑内嵌脚本
+        run: node demo/_test.js

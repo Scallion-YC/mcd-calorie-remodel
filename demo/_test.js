@@ -59,5 +59,36 @@ check("别名命中（原味双层深海鳕鱼堡）", !!E.macro("原味双层�
 check("页面已渲染卡片", nodes["card"] && nodes["card"].innerHTML.length > 200);
 check("脚注含 31 个可计算", nodes["foot"] && nodes["foot"].innerHTML.indexOf(">31<") >= 0);
 
+// 第二轮：带 URL 参数初始化（分享链接用）
+const nodes2 = {};
+const document2 = {
+  getElementById(id) { nodes2[id] = nodes2[id] || el(id); return nodes2[id]; },
+  querySelectorAll() { return []; },
+};
+const sandbox2 = {
+  document: document2, window: {}, console, String, Number, Math, JSON, Object, Array,
+  isNaN, parseFloat, decodeURIComponent, encodeURIComponent,
+  location: { search: "?mode=bulk&kcal=1000&w=80" },
+  history: { replaceState() {} },
+};
+sandbox2.globalThis = sandbox2;
+vm.createContext(sandbox2);
+vm.runInContext(script, sandbox2);
+const E2 = sandbox2.window.__demo;
+
+check("URL mode=bulk 生效", E2.state.mode === "bulk", E2.state.mode);
+check("URL kcal=1000 生效", E2.state.cap === 1000, String(E2.state.cap));
+check("URL w=80 生效", E2.state.weight === 80, String(E2.state.weight));
+
+sandbox2.location.search = "?mode=keep&kcal=9999&w=1";
+E2.applyParams();
+check("越界参数被夹紧", E2.state.cap === 1400 && E2.state.weight === 35,
+      E2.state.cap + "/" + E2.state.weight);
+
+sandbox2.location.search = "?mode=xxx&kcal=abc";
+E2.applyParams();
+check("非法参数不覆盖原值", E2.state.mode === "keep" && E2.state.cap === 1400,
+      E2.state.mode + "/" + E2.state.cap);
+
 console.log("\n" + pass + " 通过 / " + fail + " 失败");
 process.exit(fail ? 1 : 0);

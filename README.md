@@ -1,5 +1,7 @@
 # 麦当劳热量改造器
 
+![test](https://github.com/Scallion-YC/mcd-calorie-remodel/actions/workflows/test.yml/badge.svg)
+
 > **同一份套餐，改三处，少 220 卡。**
 
 市面上的麦当劳工具都在回答「一单怎么点最便宜」或「吃哪个热量最低」。
@@ -134,6 +136,15 @@ demo/index.html
 ```
 
 页面里嵌了门店快照，切换模式、拖动额度、勾选改造项都会实时重算。
+
+链接可以带参数，直接停在某个状态，方便发给特定的人：
+
+```
+?mode=bulk&kcal=1000&w=80     增肌、1000 kcal、体重 80 kg
+?mode=cut&kcal=600&w=70       减脂、600 kcal、体重 70 kg
+```
+
+`mode` 取 `cut` / `bulk` / `keep`，`kcal` 限 400–1400，`w` 限 35–150，越界会被夹紧，非法值不生效。
 
 命令行同样可跑：
 

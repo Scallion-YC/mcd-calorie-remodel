@@ -530,6 +530,48 @@
     });
   }
 
+  // 用 URL 参数带入初始状态：?mode=bulk&kcal=1000&w=80
+  function readParams(){
+    if (typeof location === "undefined" || !location.search) return {};
+    var q = {};
+    location.search.replace(/^\?/, "").split("&").forEach(function(kv){
+      if(!kv) return;
+      var i = kv.indexOf("=");
+      var k = i < 0 ? kv : kv.slice(0, i);
+      var v = i < 0 ? "" : kv.slice(i + 1);
+      try { q[decodeURIComponent(k)] = decodeURIComponent(v); } catch(e) {}
+    });
+    return q;
+  }
+
+  function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+
+  function applyParams(){
+    var q = readParams();
+    if (q.mode && MODES[q.mode]) state.mode = q.mode;
+    if (q.kcal !== undefined){
+      var k = parseFloat(q.kcal);
+      if (!isNaN(k)) state.cap = clamp(k, 400, 1400);
+    }
+    if (q.w !== undefined){
+      var w = parseFloat(q.w);
+      if (!isNaN(w)) state.weight = clamp(w, 35, 150);
+    }
+    document.querySelectorAll("#mode button").forEach(function(b){
+      b.setAttribute("aria-pressed", b.dataset.mode === state.mode ? "true" : "false");
+    });
+    document.getElementById("kcal").value = state.cap;
+    document.getElementById("kcalOut").textContent = state.cap;
+    document.getElementById("weight").value = state.weight;
+  }
+
+  function syncUrl(){
+    if (typeof history === "undefined" || !history.replaceState) return;
+    var q = "?mode=" + encodeURIComponent(state.mode)
+          + "&kcal=" + state.cap + "&w=" + state.weight;
+    try { history.replaceState(null, "", q); } catch(e) {}
+  }
+
   // 控件
   document.querySelectorAll("#mode button").forEach(function(b){
     b.addEventListener("click", function(){
@@ -537,7 +579,7 @@
       b.setAttribute("aria-pressed","true");
       state.mode = b.dataset.mode;
       state.idx = 0; state.on = {};
-      renderAll();
+      renderAll(); syncUrl();
     });
   });
   var kcal = document.getElementById("kcal");
@@ -545,14 +587,14 @@
     state.cap = +kcal.value;
     document.getElementById("kcalOut").textContent = state.cap;
     state.idx = 0; state.on = {};
-    renderAll();
+    renderAll(); syncUrl();
   });
   var wt = document.getElementById("weight");
   wt.addEventListener("input", function(){
     var v = parseFloat(wt.value);
     state.weight = isNaN(v) ? 0 : v;
     state.on = {};
-    renderAll();
+    renderAll(); syncUrl();
   });
 
   // 脚注统计
@@ -578,7 +620,9 @@
     + '本页为到店口径的数据快照，外送场景见 <code>engine/delivery.py</code>（热量算法相同，另计配送与包装费）。</div>';
 
   window.__demo = {pool: pool, solve: solve, suggestions: suggestions,
-                   state: state, buildCombo: buildCombo, macro: macro, renderAll: renderAll};
+                   state: state, buildCombo: buildCombo, macro: macro,
+                   renderAll: renderAll, readParams: readParams, applyParams: applyParams};
+  applyParams();
   renderAll();
 })();
 </script>
