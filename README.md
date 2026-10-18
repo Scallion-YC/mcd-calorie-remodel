@@ -8,11 +8,13 @@
 它把套餐拆成组件，逐个算热量、蛋白、钠和差价，然后告诉你改哪一处最划算、代价多少。
 数据全部来自麦当劳中国官方 MCP，不猜、不估、不发明。
 
+**在线试玩 → <https://scallion-yc.github.io/mcd-calorie-remodel/>**（手机可用，不用装）
+
 ![界面预览](demo/preview.png)
 
 <p align="center">
   免安装 · 免 Token · 无网络请求<br>
-  把 <code>demo/index.html</code> 下载到本地，双击打开即可
+  在线打开，或把 <code>demo/index.html</code> 下载到本地双击
 </p>
 
 ---
@@ -121,8 +123,13 @@
 
 ## 快速体验（不用 Token）
 
+**在线版：<https://scallion-yc.github.io/mcd-calorie-remodel/>**
+
+手机也能开，不用装任何东西。
+
+或者把单文件下载到本地，断网也能跑：
+
 ```bash
-# 直接打开，无需安装
 demo/index.html
 ```
 
@@ -140,7 +147,7 @@ python engine/cli.py selftest     # 14 项离线验收
 
 零第三方依赖，Python 3.9+。
 
-想给它一个在线地址：仓库 Settings → Pages → Source 选 GitHub Actions，之后推送到 `main` 会自动把 `demo/` 发布成静态页（工作流见 `.github/workflows/pages.yml`）。
+在线页由 GitHub Actions 自动部署（工作流见 `.github/workflows/pages.yml`），推送到 `main` 且改动 `demo/**` 时触发。
 
 ---
 
